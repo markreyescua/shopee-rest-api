@@ -1,6 +1,8 @@
 const { validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const constants = require("../util/constants");
 
 exports.create = (req, res, next) => {
   const errors = validationResult(req);
@@ -40,12 +42,24 @@ exports.create = (req, res, next) => {
       return user.save();
     })
     .then((user) => {
+      const token = jwt.sign(
+        {
+          email: user.email,
+          userId: user._id.toString(),
+        },
+        constants.JWT_SECRET_KEY,
+        {
+          expiresIn: "7d",
+        }
+      );
       res.status(201).json({
         message: "Account successfully created.",
         userId: user._id,
         name: `${user.first_name} ${user.last_name}`,
         email: user.email,
         type: user.type,
+        created_at: user.createdAt,
+        accessToken: token,
       });
     })
     .catch((error) => {
@@ -76,6 +90,16 @@ exports.login = (req, res, next) => {
         error.statusCode = 401;
         throw error;
       }
+      const token = jwt.sign(
+        {
+          email: loadedUser.email,
+          userId: loadedUser._id.toString(),
+        },
+        constants.JWT_SECRET_KEY,
+        {
+          expiresIn: "7d",
+        }
+      );
       res.status(200).json({
         message: "Successfully signed in.",
         user: {
@@ -88,6 +112,7 @@ exports.login = (req, res, next) => {
           address: loadedUser.address,
           shop_name: loadedUser.shop_name,
           type: loadedUser.type,
+          accessToken: token,
         },
       });
     })

@@ -5,9 +5,18 @@ const bodyParser = require("body-parser");
 const path = require("path");
 const multer = require("multer");
 const compression = require("compression");
+const constants = require("./util/constants");
+const isUndefined = require("lodash/isUndefined");
+
+const session = require("express-session");
+const MongoDbStore = require("connect-mongodb-session")(session);
 
 const app = express();
-const constants = require("./util/constants");
+
+const store = new MongoDbStore({
+  uri: constants.MONGODB_URI,
+  collection: "sessions",
+});
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -32,6 +41,8 @@ const fileFilter = (req, file, cb) => {
 
 // controllers
 const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 // middlewares
 app.use(cookieParser());
@@ -41,6 +52,16 @@ app.use(
   multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 );
 app.use("/images", express.static(path.join(__dirname, "images")));
+
+// sessions
+app.use(
+  session({
+    secret: constants.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+  })
+);
 
 // CORS policy
 app.use((req, res, next) => {
@@ -54,14 +75,17 @@ app.use((req, res, next) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/products", productRoutes);
+app.use("/orders", orderRoutes);
 app.use(compression());
 
 // Error Handler
 app.use((error, req, res, next) => {
   const status = error.statusCode;
   const data = error.data;
+  const message = isUndefined(data) ? error.message : data[0].msg;
   res.status(status).json({
-    message: data[0].msg,
+    message: message,
   });
 });
 

@@ -10,9 +10,7 @@ router.put(
     body("username").custom((value, { req }) => {
       return User.findOne({ username: value }).then((userDoc) => {
         if (userDoc) {
-          return Promise.reject(
-            "This username has already been taken. Please provide another username."
-          );
+          return Promise.reject("This username has already been taken.");
         }
       });
     }),
@@ -21,15 +19,11 @@ router.put(
       .isLength({ min: 8 }),
     body("email")
       .isEmail()
-      .withMessage(
-        "Email format is invalid. Please provide a valid email address."
-      )
+      .withMessage("Please provide a valid email address.")
       .custom((value, { req }) => {
         return User.findOne({ email: value }).then((userDoc) => {
           if (userDoc) {
-            return Promise.reject(
-              "This email has already been used. Please user other email address."
-            );
+            return Promise.reject("This email has already been used.");
           }
         });
       }),

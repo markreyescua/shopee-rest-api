@@ -4,6 +4,10 @@ const Schema = mongoose.Schema;
 
 const schema = new Schema(
   {
+    sku: {
+      type: String,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
