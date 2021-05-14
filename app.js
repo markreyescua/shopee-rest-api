@@ -2,14 +2,45 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
+const path = require("path");
+const multer = require("multer");
+const compression = require("compression");
 
 const app = express();
 const constants = require("./util/constants");
+
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${file.originalname}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+// controllers
+const authRoutes = require("./routes/authRoutes");
 
 // middlewares
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
+);
+app.use("/images", express.static(path.join(__dirname, "images")));
 
 // CORS policy
 app.use((req, res, next) => {
@@ -22,14 +53,15 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use("/auth", authRoutes);
+app.use(compression());
+
 // Error Handler
 app.use((error, req, res, next) => {
   const status = error.statusCode;
-  const message = error.message;
   const data = error.data;
   res.status(status).json({
-    message: message,
-    data: data,
+    message: data[0].msg,
   });
 });
 
