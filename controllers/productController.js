@@ -28,7 +28,7 @@ exports.createProduct = async (req, res, next) => {
     const productName = req.body.product_name;
     const productDescription = req.body.product_description;
     const price = req.body.price;
-    const imageUrl = `http://localhost:3000/${req.userId}-${productSku}`;
+    const imageUrl = `http://localhost:3000/${req.file.path}`;
 
     const product = new Product({
       product_sku: productSku,
@@ -42,6 +42,7 @@ exports.createProduct = async (req, res, next) => {
     await Product.count({ product_sku: productSku, user: req.userId }).then(
       (product) => {
         if (product) {
+          deleteImage(imageUrl);
           const error = new Error("Product already exists.");
           error.statusCode = 409;
           throw error;
@@ -161,7 +162,6 @@ exports.deleteProduct = async (req, res, next) => {
     const user = await User.findById(req.userId);
     user.products.pull(productId);
     await user.save();
-
     res.status(200).json({
       message: "Successfully deleted product!",
     });
