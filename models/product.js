@@ -4,15 +4,15 @@ const Schema = mongoose.Schema;
 
 const schema = new Schema(
   {
-    sku: {
+    product_sku: {
       type: String,
       required: true,
     },
-    name: {
+    product_name: {
       type: String,
       required: true,
     },
-    description: {
+    product_description: {
       type: String,
       required: true,
     },
@@ -20,7 +20,7 @@ const schema = new Schema(
       type: Number,
       required: true,
     },
-    imageUrl: {
+    image_url: {
       type: String,
       required: true,
     },

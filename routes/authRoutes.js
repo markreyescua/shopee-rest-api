@@ -7,6 +7,7 @@ const router = express.Router();
 router.put(
   "/create",
   [
+    body("username", "username is required.").trim().not().isEmpty(),
     body("username").custom((value, { req }) => {
       return User.findOne({ username: value }).then((userDoc) => {
         if (userDoc) {
@@ -14,9 +15,11 @@ router.put(
         }
       });
     }),
+    body("password", "password is required.").trim().not().isEmpty(),
     body("password", "Password should contain at least 8 characters.")
       .trim()
       .isLength({ min: 8 }),
+    body("email", "email is required.").trim().not().isEmpty(),
     body("email")
       .isEmail()
       .withMessage("Please provide a valid email address.")
@@ -27,9 +30,9 @@ router.put(
           }
         });
       }),
-    body("first_name", "First name is required.").trim().not().isEmpty(),
-    body("last_name", "Last name is required.").trim().not().isEmpty(),
-    body("type", "Account type is required.").trim().not().isEmpty(),
+    body("first_name", "first_name is required.").trim().not().isEmpty(),
+    body("last_name", "last_name is required.").trim().not().isEmpty(),
+    body("type", "type is required.").trim().not().isEmpty(),
   ],
   controller.create
 );

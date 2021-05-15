@@ -44,7 +44,8 @@ exports.create = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign(
         {
-          email: user.email,
+          username: loadedUser.username,
+          email: loadedUser.email,
           userId: user._id.toString(),
         },
         constants.JWT_SECRET_KEY,
@@ -92,6 +93,7 @@ exports.login = (req, res, next) => {
       }
       const token = jwt.sign(
         {
+          username: loadedUser.username,
           email: loadedUser.email,
           userId: loadedUser._id.toString(),
         },

@@ -20,7 +20,7 @@ const store = new MongoDbStore({
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "images");
+    cb(null, `images`);
   },
   filename: (req, file, cb) => {
     cb(null, `${file.originalname}`);
@@ -83,7 +83,7 @@ app.use(compression());
 app.use((error, req, res, next) => {
   const status = error.statusCode;
   const data = error.data;
-  const message = isUndefined(data) ? error.message : data[0].msg;
+  const message = !isUndefined(data) ? data[0].msg : error.message;
   res.status(status).json({
     message: message,
   });
