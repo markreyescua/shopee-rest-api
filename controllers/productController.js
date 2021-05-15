@@ -72,32 +72,18 @@ exports.createProduct = async (req, res, next) => {
 
 exports.getProducts = async (req, res, next) => {
   try {
-    let currentPage = +req.query.page || 1;
-    let perPage = +req.query.count || 25;
-    let nextPage = +currentPage;
-    let totalPage = 0;
-    let own = req.query.own || false;
-
-    const count = await Product.find().countDocuments();
-    totalPage = Math.ceil(count / perPage);
-    nextPage = totalPage <= currentPage ? currentPage : currentPage + 1;
-
+    const own = req.query.own || false;
     let products;
 
-    if (own) {
-      products = await Product.find({ user: req.userId })
-        .select("-_id -__v -updatedAt")
-        .skip((currentPage - 1) * perPage)
-        .limit(perPage);
+    if (own == "true") {
+      products = await Product.find({ user: req.userId }).select("-__v");
     } else {
       products = await Product.find()
-        .select("-_id -__v -updatedAt")
+        .select("-__v")
         .populate(
           "user",
           "_id email first_name last_name shop_name number address"
-        )
-        .skip((currentPage - 1) * perPage)
-        .limit(perPage);
+        );
     }
 
     if (products.length < 1) {
@@ -107,9 +93,6 @@ exports.getProducts = async (req, res, next) => {
     }
     res.status(200).json({
       message: "Successfully retrieved products.",
-      total_page: totalPage,
-      current_page: currentPage,
-      next_page: nextPage,
       products: products,
     });
   } catch (error) {
@@ -123,7 +106,7 @@ exports.getProducts = async (req, res, next) => {
 exports.getProduct = async (req, res, next) => {
   try {
     const productId = req.params.id;
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).select("-__v");
     if (!product) {
       const error = new Error("No product with matching id found.");
       error.statusCode = 404;
