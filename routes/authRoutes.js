@@ -4,7 +4,7 @@ const User = require("../models/user");
 const controller = require("../controllers/authController");
 const router = express.Router();
 
-router.put(
+router.post(
   "/create",
   [
     body("username", "username is required.").trim().not().isEmpty(),

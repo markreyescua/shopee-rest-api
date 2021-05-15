@@ -5,35 +5,40 @@ const User = require("../models/user");
 const Product = require("../models/product");
 
 exports.createProduct = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error("Validation failed.");
-    error.statusCode = 422;
-    error.data = errors.array();
-    throw error;
-  }
-  if (!req.file) {
-    const error = new Error("No image provided.");
-    error.statusCode = 422;
-    throw error;
-  }
-
-  const productSku = req.body.product_sku;
-  const productName = req.body.product_name;
-  const productDescription = req.body.product_description;
-  const price = req.body.price;
-  const imageUrl = `http://localhost:3000/${req.userId}-${productSku}`;
-
-  const product = new Product({
-    product_sku: productSku,
-    product_name: productName,
-    product_description: productDescription,
-    price: price,
-    image_url: imageUrl,
-    user: req.userId,
-  });
-
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error("Validation failed.");
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    if (req.userType !== "admin") {
+      const error = new Error("Unauthorized.");
+      error.statusCode = 401;
+      throw error;
+    }
+    if (!req.file) {
+      const error = new Error("No image provided.");
+      error.statusCode = 422;
+      throw error;
+    }
+
+    const productSku = req.body.product_sku;
+    const productName = req.body.product_name;
+    const productDescription = req.body.product_description;
+    const price = req.body.price;
+    const imageUrl = `http://localhost:3000/${req.userId}-${productSku}`;
+
+    const product = new Product({
+      product_sku: productSku,
+      product_name: productName,
+      product_description: productDescription,
+      price: price,
+      image_url: imageUrl,
+      user: req.userId,
+    });
+
     await Product.count({ product_sku: productSku, user: req.userId }).then(
       (product) => {
         if (product) {
@@ -66,13 +71,13 @@ exports.createProduct = async (req, res, next) => {
 };
 
 exports.getProducts = async (req, res, next) => {
-  let currentPage = +req.query.page || 1;
-  let perPage = +req.query.count || 25;
-  let nextPage = +currentPage;
-  let totalPage = 0;
-  let own = req.query.own || false;
-
   try {
+    let currentPage = +req.query.page || 1;
+    let perPage = +req.query.count || 25;
+    let nextPage = +currentPage;
+    let totalPage = 0;
+    let own = req.query.own || false;
+
     const count = await Product.find().countDocuments();
     totalPage = Math.ceil(count / perPage);
     nextPage = totalPage <= currentPage ? currentPage : currentPage + 1;
@@ -116,9 +121,8 @@ exports.getProducts = async (req, res, next) => {
 };
 
 exports.getProduct = async (req, res, next) => {
-  const productId = req.params.id;
-
   try {
+    const productId = req.params.id;
     const product = await Product.findById(productId);
     if (!product) {
       const error = new Error("No product with matching id found.");
@@ -139,27 +143,42 @@ exports.getProduct = async (req, res, next) => {
 };
 
 exports.updateProduct = (req, res, next) => {
+  if (req.userType !== "admin") {
+    const error = new Error("Unauthorized.");
+    error.statusCode = 401;
+    throw error;
+  }
   // TODO: add update product api here
 };
 
 exports.deleteProduct = async (req, res, next) => {
-  const productId = req.params.id;
   try {
+    if (req.userType !== "admin") {
+      const error = new Error("Unauthorized.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const productId = req.params.id;
     const product = await Product.findById(productId);
+
     if (!product) {
       const error = new Error("No product with matching id found.");
       error.statusCode = 404;
       throw error;
     }
+
     if (product.user.toString() !== req.userId) {
       const error = new Error("You are not authorized to delete this product.");
       error.statusCode = 403;
       throw error;
     }
+
     await Product.findByIdAndRemove(productId);
     const user = await User.findById(req.userId);
     user.products.pull(productId);
     await user.save();
+
     res.status(200).json({
       message: "Successfully deleted product!",
     });
