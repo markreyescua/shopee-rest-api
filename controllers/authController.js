@@ -54,12 +54,22 @@ exports.create = async (req, res, next) => {
     );
     res.status(201).json({
       message: "Account successfully created.",
-      userId: user._id,
-      name: `${user.first_name} ${user.last_name}`,
-      email: user.email,
-      type: user.type,
-      created_at: user.createdAt,
-      accessToken: token,
+      data: {
+        user_id: user._id,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        number: user.number,
+        address: user.address,
+        shop_name: user.shop_name,
+        type: user.type,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+        token: {
+          access_token: token,
+        },
+      },
     });
   } catch (error) {
     if (!error.statusCode) {
@@ -102,8 +112,8 @@ exports.login = async (req, res, next) => {
     );
     res.status(200).json({
       message: "Successfully signed in.",
-      user: {
-        id: user._id.toString(),
+      data: {
+        user_id: user._id.toString(),
         username: user.username,
         first_name: user.first_name,
         last_name: user.last_name,
@@ -112,7 +122,9 @@ exports.login = async (req, res, next) => {
         address: user.address,
         shop_name: user.shop_name,
         type: user.type,
-        accessToken: token,
+        token: {
+          access_token: token,
+        },
       },
     });
   } catch (error) {
@@ -125,4 +137,8 @@ exports.login = async (req, res, next) => {
 
 exports.update = (req, res, next) => {
   // TODO: add update user api here
+};
+
+exports.delete = (req, res, next) => {
+  // TODO: add delete user api here
 };
